@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "functions.h"
 
@@ -274,8 +275,6 @@ int verifyMatrix(int *matrix[], int matrixID[][4], int rows, int cols){
     return error;
 }
 
-
-
 int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
 
     unsigned char byte; // Byte content
@@ -283,15 +282,15 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
     unsigned char bits[8]; // Byte content in array
     unsigned char mask = 1; // Bit mask
     int cipherBinary[8]; // Binary cipher with matrix
-    int i, j, k = 0; // indice
+    int j, k = 0; // indice
 
     FILE *fileInput;
     FILE *fileOutput;
 
-    fileInput = fopen("mp4.mp4","rb");
+    fileInput = fopen("test.txt","rb");
 
-    char *fileToCypher = "mp4.mp4";
-    char *cypherFile = "mp4.mp4c"; //Tempory -> strcat f
+//    char *fileToCypher = "test.txt";
+    char *cypherFile = "test.txtc"; //Tempory -> strcat f
 
     fileOutput = fopen(cypherFile, "wb+");
 
@@ -317,10 +316,15 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
             // k is the counter (max 4) for the choice of the good line into the matrix
             k++;
         }
+        k=7;
         for (j = 0; j < 8; j++) {
             cipherBinary[j] = cipherBinary[j] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
-            byteCypher += cipherBinary[j]; // add the cyphered value to the final byte
-//            printf("%d",cipherBinary[j]); // temporary
+            if (cipherBinary[j] == 0){  // add the cyphered value to the final byte
+                byteCypher += 0;
+            }else{
+                byteCypher += cipherBinary[j] * ((int) pow(2, k));
+            }
+            k--;
         }
         fwrite(&byteCypher,sizeof(unsigned char), 1,fileOutput);
 
@@ -343,28 +347,21 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
             // k is the counter (max 4) for the choice of the good line into the matrix
             k++;
         }
+        k=7;
         for (j = 0; j < 8; j++) {
             cipherBinary[j] = cipherBinary[j] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
-            byteCypher += cipherBinary[j]; // add the cyphered value to the final byte
-//            printf("%d",cipherBinary[j]); // temporary
+            if (cipherBinary[j] == 0){  // add the cyphered value to the final byte
+                byteCypher += 0;
+            }else{
+                byteCypher += cipherBinary[j] * ((int) pow(2, k));
+            }
+            k--;
         }
         fwrite(&byteCypher,sizeof(unsigned char), 1,fileOutput);
     }
     fclose(fileInput); // close the input file
-
     fclose(fileOutput); //close the output file
 
     return 0;
 }
-/*
 
-int main2(int argc, char **argv) {
-
-    int matrix[4][8];
-    matrix[0][0] = 1; matrix[0][1] = 0; matrix[0][2] = 0; matrix[0][3] = 0; matrix[0][4] = 1; matrix[0][5] = 1; matrix[0][6] = 1; matrix[0][7] = 0;
-    matrix[1][0] = 0; matrix[1][1] = 1; matrix[1][2] = 0; matrix[1][3] = 0; matrix[1][4] = 1; matrix[1][5] = 1; matrix[1][6] = 0; matrix[1][7] = 1;
-    matrix[2][0] = 0; matrix[2][1] = 0; matrix[2][2] = 1; matrix[2][3] = 0; matrix[2][4] = 1; matrix[2][5] = 0; matrix[2][6] = 1; matrix[2][7] = 1;
-    matrix[3][0] = 0; matrix[3][1] = 0; matrix[3][2] = 0; matrix[3][3] = 1; matrix[3][4] = 0; matrix[3][5] = 1; matrix[3][6] = 1; matrix[3][7] = 1;
-
-}
- */

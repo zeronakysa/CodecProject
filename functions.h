@@ -1,11 +1,7 @@
-//
-// Created by Zero on 22/11/2017.
-//
+#ifndef INC_2017_ESGI_PROJECT_CIPHER_FUNCTIONS_H
+#define INC_2017_ESGI_PROJECT_CIPHER_FUNCTIONS_H
 
-#ifndef CODECPROJECT_FUNCTIONS_H
-#define CODECPROJECT_FUNCTIONS_H
-
-
+int menu();
 
 //Display the awesome program intro
 void progIntro();
@@ -28,13 +24,19 @@ int verifyContent(char *);
 //Create the matrix and initialize it
 int **matrixAlloc(int, int);
 
-//Set the matrix
+//Pour file content in the matrix
 void setMatrix(int *[], char*,int, int);
 
 //Verify the content of matrix, return 1 if error
 int verifyMatrix(int *[], int[][4], int, int);
 
-int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/);
+//Ask for the file path (cipher or decipher)
+char *askFilePath();
+
+int cypherByMatrix(int *[], int, int, char *);
+
+int *colsMatching(int *[], int[][4], int, int);
+
+int decipher(int *[], int[][4], int, int, char *);
 
 #endif //INC_2017_ESGI_PROJECT_CIPHER_FUNCTIONS_H
-

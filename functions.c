@@ -5,6 +5,25 @@
 
 #include "functions.h"
 
+int menu(){
+    int choice = 0;
+
+    puts(" ");
+    puts("Selection Menu");
+    puts("1. Cipher a file");
+    puts("2. Decipher a file");
+    puts("3. Exit program.");
+    puts(" ");
+    puts("Enter a choice :");
+
+    if(scanf("%d", &choice) != 1){
+        perror("Error ");
+        exit(EXIT_FAILURE);
+    }
+
+    return choice;
+}
+
 void progIntro(){
     puts("+------------------------------------+");
     puts("|           Codec Project            |");
@@ -187,6 +206,8 @@ void setMatrix(int *matrix[], char *matrixFileContent,int rows, int cols){
             k++;
         }
     }
+    // Free the char* containing the matrix file content
+    free(matrixFileContent);
 }
 
 int verifyMatrix(int *matrix[], int matrixID[][4], int rows, int cols){
@@ -275,24 +296,55 @@ int verifyMatrix(int *matrix[], int matrixID[][4], int rows, int cols){
     return error;
 }
 
-int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
+char *askFilePath(){
+
+    char pathTmp[255];
+    char *filePath = NULL;
+
+    puts("Enter the filename to cipher/decipher");
+    clearBuffer();
+    fgets(pathTmp, 255, stdin);
+
+    if(strlen(pathTmp) < 255)
+        pathTmp[strlen(pathTmp) - 1] = '\0';
+
+    filePath = malloc((strlen(pathTmp) + 1));
+
+    if(filePath == NULL){
+        puts("File Path Allocation Error.");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(filePath, pathTmp);
+    return filePath;
+}
+
+int cypherByMatrix(int *matrix[], int rows, int cols, char *filePath){
 
     unsigned char byte; // Byte content
     unsigned char byteCypher; // Byte content cyphered
     unsigned char bits[8]; // Byte content in array
     unsigned char mask = 1; // Bit mask
     int cipherBinary[8]; // Binary cipher with matrix
-    int j, k = 0; // indice
+    int j, k = 0; // index
+
 
     FILE *fileInput;
     FILE *fileOutput;
 
-    fileInput = fopen("test.txt","rb");
+    fileInput = fopen(filePath,"rb");
 
-//    char *fileToCypher = "test.txt";
-    char *cypherFile = "test.txtc"; //Tempory -> strcat f
+    //Filename *.*c
+    char cipheredFileName[255] = {'\0'};
+    strcpy(cipheredFileName, strcat(filePath,"c"));
 
-    fileOutput = fopen(cypherFile, "wb+");
+
+    fileOutput = fopen(cipheredFileName, "wb+");
+
+    if(fileInput == NULL || fileOutput == NULL){
+        perror("Error ");
+        exit(EXIT_FAILURE);
+    }
 
     while(fread(&byte, sizeof(unsigned char), 1, fileInput), !feof(fileInput)) {
 
@@ -316,15 +368,15 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
             // k is the counter (max 4) for the choice of the good line into the matrix
             k++;
         }
-        k=7;
-        for (j = 0; j < 8; j++) {
-            cipherBinary[j] = cipherBinary[j] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
-            if (cipherBinary[j] == 0){  // add the cyphered value to the final byte
+        j = 7;
+        for (int i = 0; i < 8; i++) {
+            cipherBinary[i] = cipherBinary[i] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
+            if (cipherBinary[i] == 0){  // add the cyphered value to the final byte
                 byteCypher += 0;
             }else{
-                byteCypher += cipherBinary[j] * ((int) pow(2, k));
+                byteCypher +=  mask << j;
             }
-            k--;
+            j--;
         }
         fwrite(&byteCypher,sizeof(unsigned char), 1,fileOutput);
 
@@ -347,15 +399,15 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
             // k is the counter (max 4) for the choice of the good line into the matrix
             k++;
         }
-        k=7;
-        for (j = 0; j < 8; j++) {
-            cipherBinary[j] = cipherBinary[j] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
-            if (cipherBinary[j] == 0){  // add the cyphered value to the final byte
+        j = 7;
+        for (int i = 0; i < 8; i++) {
+            cipherBinary[i] = cipherBinary[i] % 2; // if we got 0103 0301 we transform it in 0101 0101 (1 + 1 + 1 = 11 so we catch the 1)
+            if (cipherBinary[i] == 0){  // add the cyphered value to the final byte
                 byteCypher += 0;
             }else{
-                byteCypher += cipherBinary[j] * ((int) pow(2, k));
+                byteCypher +=  mask << j;
             }
-            k--;
+            j--;
         }
         fwrite(&byteCypher,sizeof(unsigned char), 1,fileOutput);
     }
@@ -365,3 +417,134 @@ int cypherByMatrix(int *matrix[], int rows, int cols/*, char *fileToCypher*/){
     return 0;
 }
 
+int *colsMatching(int *matrix[], int matrixID[][4], int rows, int cols){
+    int *colsMatch = NULL;
+    int i, j, k, l = 0;
+    int count = 0;
+
+    colsMatch = malloc(4 * sizeof(int));
+
+    if(colsMatch == NULL){
+        perror("Error ");
+        exit(EXIT_FAILURE);
+    }
+
+    //Verify matrixID is in matrix
+
+    //Loop on cols of matrixID
+    for(j = 0; j < 4; j++){
+        //Loop on cols of matrix
+        for(k = 0; k < cols; k++){
+            count = 0;
+            //Loop on rows for both matrix
+            for(i = 0; i < rows; i++){
+                // Count if one cols of matrix is equal to matrixID
+                if(matrixID[i][j] == matrix[i][k])
+                    count++;
+            }
+            // If cols equal : colsCount++
+            if(count == rows){
+                colsMatch[l] = k;
+                l++;
+                break;
+            }
+        }
+    }
+    return colsMatch;
+}
+
+int decipher(int *matrix[], int matrixID[][4], int rows, int cols, char *filePath){
+
+    int i, j ,k = 0;
+    // Byte reading file
+    unsigned char byte;
+    // array for converted Byte var
+    unsigned char bits[8] = {0};
+    // Array containing deciphered byte
+    unsigned char decipherBits[4] = {0};
+    // Array containing two parts of decipherBits
+    unsigned char decipherByte[8] = {0};
+    // Result containing decipherBits binary into decimal
+    unsigned char decipherByteInDec = 0;
+    // Temporary var for array index
+    int tmp = 0;
+    // Byte writing into to new file *.cd
+    unsigned char decipheredByte;
+    // FileOutput path
+    char decipheredFileName[255] = {'\0'};
+
+
+
+    // Array containing cols matching MatrixID;
+    int *colsArray = NULL;
+
+    // FILE var
+    FILE *fileInput;
+    FILE *fileOutput;
+
+    fileInput = fopen(filePath, "rb");
+
+    if(fileInput == NULL){
+        perror("Error ");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(decipheredFileName, strcat(filePath, "d"));
+
+    fileOutput = fopen(decipheredFileName, "wb+");
+
+    if(fileOutput == NULL){
+        perror("Error ");
+        exit(EXIT_FAILURE);
+    }
+
+    // Gets cols from matrix matching matrixID
+    colsArray = colsMatching(matrix, matrixID, rows, cols);
+
+    // FIRST PART
+    while(fread(&byte, sizeof(unsigned char), 1, fileInput), !feof(fileInput)){
+        for(i = 7; i >= 0; i--){
+            bits[i] =  byte % 2;
+            byte /= 2;
+        }
+
+        for(i = 0; i < 4; i++){
+            tmp = colsArray[i];
+            decipherBits[i] = bits[tmp];
+            decipherByte[i] = decipherBits[i];
+        }
+
+        // Read Second Byte
+        fread(&byte, sizeof(unsigned char), 1, fileInput);
+
+        for(i = 7; i >= 0; i++){
+            bits[i] = byte % 2;
+            byte /= 2;
+        }
+
+        for(i = 0; i < rows; i++){
+            tmp = colsArray[i];
+            decipherBits[i] = bits[tmp];
+        }
+
+        for(i = 4; i < cols; i++){
+            decipherByte[i] = decipherBits[i];
+        }
+
+        k = 7;
+        for (j = 0; j < cols; j++) {
+            if (decipherByte[j] == 0){  // add the cyphered value to the final byte
+                decipherByteInDec += 0;
+            }else{
+                decipherByteInDec += decipherByte[j] * ((int) pow(2, k));
+            }
+            k--;
+        }
+        fwrite(&decipherByteInDec,sizeof(unsigned char), 1,fileOutput);
+
+    }
+
+    fclose(fileInput);
+    fclose(fileOutput);
+    free(colsArray);
+}
